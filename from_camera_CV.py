@@ -71,40 +71,40 @@ while(True):
     #im = cv2.imread('2object.JPG')
     ret, frame = cap.read()
     im = cv2.resize(frame, (500, 500), interpolation=cv2.INTER_CUBIC)
-    lower_white = np.array([0, 0, 46])
-    upper_white = np.array([180, 30, 220])
-    hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, lower_white, upper_white)
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(mask, (7, 7), 0)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
     ret, binary = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY)
     contours, hierachy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-    cv2.drawContours(im, contours, -1, (0, 0, 255), 3)
-    cnt_count = 1
+    #cv2.drawContours(im, contours, -1, (0, 0, 255), 3)
+    cnt_count = []
     # cnt_count_index = cnt_count -1
     centerX = []
     centerY = []
     print(bool(contours))
     have_countor=0
-    for c in contours:
+    for cnt in range(len(contours)):
+        epsilon = 0.01 * cv2.arcLength(contours[cnt], True)
+        approx = cv2.approxPolyDP(contours[cnt], epsilon, True)
+        # print(len(approx))
+        area = cv2.contourArea(contours[cnt])
 
-        # CV2.moments會傳回一系列的moments值，我們只要知道中點X, Y的取得方式是如下進行即可。
-        # print('c=',c)
-        M = cv2.moments(c)
-        if M["m00"] != 0:
-            cX = int(M["m10"] / M["m00"])
+        if (len(approx) < 5 and len(approx) >3 and area > 1000 and area < 3000):
+            print(area)
+            cv2.drawContours(im, contours[cnt], -1, (255, 255, 255), 3)
+            M = cv2.moments(contours[cnt])
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
 
-            cY = int(M["m01"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                # print(area)
+                cnt_count.append(cnt)
+                centerX.append(cX)
+                centerY.append(cY)
+                # cnt_count = cnt_count + 1
+                text = str(cnt)
+                cv2.putText(im, text, (cX + 5, cY), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
+                cv2.circle(im, (cX, cY), 10, (1, 227, 254), -1)
 
-            cntNum = cnt_count
-            have_countor=1
-            centerX.append(cX)
-            centerY.append(cY)
-            cnt_count = cnt_count + 1
-            text = str(cntNum)
-            cv2.putText(im, text, (cX + 5, cY), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
-            cv2.circle(im, (cX, cY), 10, (1, 227, 254), -1)
-    
     left_point = []  # define for save 4 most point
     right_point = []
     top_point = []
@@ -113,40 +113,39 @@ while(True):
 
     mRB = []
     mLB = []
-    if(have_countor ==1):
-        for Num in range(cntNum):
-            cnt = contours[Num]
-            leftmost = tuple(cnt[cnt[:, :, 0].argmin()][0])
-            rightmost = tuple(cnt[cnt[:, :, 0].argmax()][0])
-            topmost = tuple(cnt[cnt[:, :, 1].argmin()][0])
-            bottommost = tuple(cnt[cnt[:, :, 1].argmax()][0])
-            ## get 4 most point
-            cv2.circle(im, leftmost, 10, [0, 90, 255], -1)
-            cv2.circle(im, topmost, 10, [0, 90, 255], -1)
-            cv2.circle(im, rightmost, 10, [0, 90, 255], -1)
-            cv2.circle(im, bottommost, 10, [0, 90, 255], -1)
-            ## draw 4 most point
-            left_point.append(leftmost)
-            right_point.append(rightmost)
-            top_point.append(topmost)
-            bottom_point.append(bottommost)
-            ## tuple type change to list type
-            npleft = np.array(left_point)
-            npright = np.array(right_point)
-            # nptop = np.array(top_point)
-            npbottom = np.array(bottom_point)
-            ## change list to np.array
-            leftX = list(npleft[:, 0])
-            rightX = list(npright[:, 0])
-            # topX = list(nptop [ : ,  0 ] )
-            bottomX = list(npbottom[:, 0])
-            leftY = list(npleft[:, 1])
-            rightY = list(npright[:, 1])
-            # topY=list(nptop [ : ,  1 ] )
-            bottomY = list(npbottom[:, 1])
-            mRB.append((bottomY[Num] - rightY[Num]) / (bottomX[Num] - rightX[Num]))
-            mLB.append((bottomY[Num] - leftY[Num]) / (bottomX[Num] - leftX[Num]))
-            X_position = leftY[0] / (-1 * mRB[0])
+    for Num in range(len(cnt_count)):
+        cnt = contours[cnt_count[Num]]
+        leftmost = tuple(cnt[cnt[:, :, 0].argmin()][0])
+        rightmost = tuple(cnt[cnt[:, :, 0].argmax()][0])
+        topmost = tuple(cnt[cnt[:, :, 1].argmin()][0])
+        bottommost = tuple(cnt[cnt[:, :, 1].argmax()][0])
+        ## get 4 most point
+        cv2.circle(im, leftmost, 10, [0, 90, 255], -1)
+        cv2.circle(im, topmost, 10, [0, 90, 255], -1)
+        cv2.circle(im, rightmost, 10, [0, 90, 255], -1)
+        cv2.circle(im, bottommost, 10, [0, 90, 255], -1)
+        ## draw 4 most point
+        left_point.append(leftmost)
+        right_point.append(rightmost)
+        top_point.append(topmost)
+        bottom_point.append(bottommost)
+        ## tuple type change to list type
+        npleft = np.array(left_point)
+        npright = np.array(right_point)
+        # nptop = np.array(top_point)
+        npbottom = np.array(bottom_point)
+        ## change list to np.array
+        leftX = list(npleft[:, 0])
+        rightX = list(npright[:, 0])
+        # topX = list(nptop [ : ,  0 ] )
+        bottomX = list(npbottom[:, 0])
+        leftY = list(npleft[:, 1])
+        rightY = list(npright[:, 1])
+        # topY=list(nptop [ : ,  1 ] )
+        bottomY = list(npbottom[:, 1])
+        mRB.append((bottomY[Num] - rightY[Num]) / (bottomX[Num] - rightX[Num]))
+        mLB.append((bottomY[Num] - leftY[Num]) / (bottomX[Num] - leftX[Num]))
+        X_position = leftY[0] / (-1 * mRB[0])
         
     """
     print(centerX)
@@ -159,7 +158,7 @@ while(True):
     print('mRb', mRB)  # 把numpy轉換成list
     print('mLB', mLB)
     """
-    cv2.imshow('123', mask)
+    cv2.imshow('123', im)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

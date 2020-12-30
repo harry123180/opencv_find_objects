@@ -61,35 +61,42 @@ def all_contour_X_Y(img):#要返回所有輪廓的X，Y值
    # cv2.imshow('123',binary)
     
     #cv2.waitKey()
-im  = cv2.imread('2object.JPG')
+#im  = cv2.imread('2object.JPG')
+im  = cv2.imread('photo1.png')
 im = cv2.resize(im, (500, 500), interpolation=cv2.INTER_CUBIC)
 gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 blurred = cv2.GaussianBlur(gray,(7,7),0)
 ret,binary = cv2.threshold(blurred,127,255,cv2.THRESH_BINARY)
 contours,hierachy = cv2.findContours(binary,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
-cv2.drawContours(im,contours,-1,(0,0,255),3)
-cnt_count = 1
+#cv2.drawContours(im,contours,-1,(0,0,255),3)
+cnt_count = []
 #cnt_count_index = cnt_count -1
 centerX =[]
 centerY =[]
-for c in contours:
-    
-        
-            # CV2.moments會傳回一系列的moments值，我們只要知道中點X, Y的取得方式是如下進行即可。
-            # print('c=',c)
-    M = cv2.moments(c)
-    if M["m00"] !=0 :
-        cX = int(M["m10"] / M["m00"])
-     
-        cY = int(M["m01"] / M["m00"])
-                
-        cntNum = cnt_count
-        centerX.append(cX)
-        centerY.append(cY)
-        cnt_count = cnt_count+1
-        text = str(cntNum)
-        cv2.putText(im, text, (cX+5, cY), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 255), 1, cv2.LINE_AA)
-        cv2.circle(im, (cX, cY), 10, (1, 227, 254), -1)
+for cnt in range(len(contours)):
+    epsilon = 0.01 * cv2.arcLength(contours[cnt], True)
+    approx = cv2.approxPolyDP(contours[cnt], epsilon, True)
+    #print(len(approx))
+    area = cv2.contourArea(contours[cnt])
+
+    if(len(approx)==4 and area >1000):
+        print(area)
+        cv2.drawContours(im, contours[cnt], -1, (255, 255, 255), 3)
+        M = cv2.moments(contours[cnt])
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+
+            cY = int(M["m01"] / M["m00"])
+            # print(area)
+            cnt_count.append(cnt)
+            centerX.append(cX)
+            centerY.append(cY)
+            #cnt_count = cnt_count + 1
+            text = str(cnt)
+            cv2.putText(im, text, (cX + 5, cY), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
+            cv2.circle(im, (cX, cY), 10, (1, 227, 254), -1)
+
+
 left_point = [] #define for save 4 most point
 right_point = []
 top_point = []
@@ -98,8 +105,8 @@ bottom_point = []
 
 mRB=[]
 mLB=[]
-for Num in range(cntNum):
-    cnt = contours[Num]
+for Num in range(len(cnt_count)):
+    cnt = contours[cnt_count[Num]]
     leftmost = tuple(cnt[cnt[:,:,0].argmin()][0])
     rightmost = tuple(cnt[cnt[:,:,0].argmax()][0])
     topmost = tuple(cnt[cnt[:,:,1].argmin()][0])
@@ -131,6 +138,7 @@ for Num in range(cntNum):
     mRB.append((bottomY[Num]-rightY[Num])/(bottomX[Num]-rightX[Num]))
     mLB.append((bottomY[Num]-leftY[Num])/(bottomX[Num]-leftX[Num]))
     X_position=leftY[0]/(-1*mRB[0])
+    """
 print (centerX)
 print (centerY)
     
@@ -140,7 +148,7 @@ print ('bottom point ',bottom_point)
 print ('right point ',right_point)
 print( 'mRb' ,mRB) #把numpy轉換成list
 print('mLB',mLB)
-
+"""
 cv2.imshow('123',im)
     
 cv2.waitKey()
