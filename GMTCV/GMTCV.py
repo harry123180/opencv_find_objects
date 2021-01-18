@@ -63,11 +63,17 @@ def all_contour_X_Y(img):#要返回所有輪廓的X，Y值
     #cv2.waitKey()
 #im  = cv2.imread('2object.JPG')
 im  = cv2.imread('photo1.png')
-im = cv2.resize(im, (500, 500), interpolation=cv2.INTER_CUBIC)
+im = cv2.resize(im, (1000, 1000), interpolation=cv2.INTER_CUBIC)
 gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-blurred = cv2.GaussianBlur(gray,(7,7),0)
+blurred = cv2.GaussianBlur(gray,(13,13),0)
 ret,binary = cv2.threshold(blurred,127,255,cv2.THRESH_BINARY)
-contours,hierachy = cv2.findContours(binary,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
+low_threshold = 1
+high_threshold = 10
+edges = cv2.Canny(binary, low_threshold, high_threshold)
+kernel = np.ones((5,5), np.uint8)
+dilation = cv2.dilate(edges, kernel, iterations = 1)
+erosion = cv2.erode(dilation, kernel, iterations = 1)
+contours,hierachy = cv2.findContours(erosion,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
 #cv2.drawContours(im,contours,-1,(0,0,255),3)
 cnt_count = []
 #cnt_count_index = cnt_count -1
@@ -78,14 +84,12 @@ for cnt in range(len(contours)):
     approx = cv2.approxPolyDP(contours[cnt], epsilon, True)
     #print(len(approx))
     area = cv2.contourArea(contours[cnt])
-
-    if(len(approx)==4 and area >1000):
-        print(area)
+    if( area >1000):
+        print('輪廓號=',cnt,'角點數=', len(approx))
         cv2.drawContours(im, contours[cnt], -1, (255, 255, 255), 3)
         M = cv2.moments(contours[cnt])
         if M["m00"] != 0:
             cX = int(M["m10"] / M["m00"])
-
             cY = int(M["m01"] / M["m00"])
             # print(area)
             cnt_count.append(cnt)
@@ -149,6 +153,8 @@ print ('right point ',right_point)
 print( 'mRb' ,mRB) #把numpy轉換成list
 print('mLB',mLB)
 """
-cv2.imshow('123',im)
+cv2.imshow('edges',edges)
+cv2.imshow('im',im)
+cv2.imshow('bin',binary)
     
 cv2.waitKey()

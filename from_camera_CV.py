@@ -65,31 +65,35 @@ def all_contour_X_Y(img):  # 要返回所有輪廓的X，Y值
     """
 # cv2.imshow('123',binary)
 cap = cv2.VideoCapture(0)
-
+itt=0
 # cv2.waitKey()
 while(True):
     #im = cv2.imread('2object.JPG')
     ret, frame = cap.read()
     im = cv2.resize(frame, (500, 500), interpolation=cv2.INTER_CUBIC)
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    #hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
     blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    low_threshold = 1
+    high_threshold = 10
+    edges = cv2.Canny(blurred, low_threshold, high_threshold)
     ret, binary = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY)
-    contours, hierachy = cv2.findContours(binary, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+    contours, hierachy = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
     #cv2.drawContours(im, contours, -1, (0, 0, 255), 3)
     cnt_count = []
     # cnt_count_index = cnt_count -1
     centerX = []
     centerY = []
-    print(bool(contours))
+    #print(bool(contours))
     have_countor=0
     for cnt in range(len(contours)):
-        epsilon = 0.01 * cv2.arcLength(contours[cnt], True)
+        epsilon = 0.04 * cv2.arcLength(contours[cnt], True)
         approx = cv2.approxPolyDP(contours[cnt], epsilon, True)
         # print(len(approx))
         area = cv2.contourArea(contours[cnt])
 
-        if (len(approx) < 5 and len(approx) >3 and area > 1000 and area < 3000):
-            print(area)
+        if (len(approx) <5 and len(approx) >3 and area > 2000 and area < 4000):
+            #print(area)
             cv2.drawContours(im, contours[cnt], -1, (255, 255, 255), 3)
             M = cv2.moments(contours[cnt])
             if M["m00"] != 0:
@@ -101,8 +105,10 @@ while(True):
                 centerX.append(cX)
                 centerY.append(cY)
                 # cnt_count = cnt_count + 1
-                text = str(cnt)
-                cv2.putText(im, text, (cX + 5, cY), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
+                f1=cY*0.541+108.602
+                f2 = cX*0.571-103.28
+                text = '%.2f' % f1+','+'%.2f' % f2
+                cv2.putText(im, text, ( 50, 50), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
                 cv2.circle(im, (cX, cY), 10, (1, 227, 254), -1)
 
     left_point = []  # define for save 4 most point
@@ -113,8 +119,9 @@ while(True):
 
     mRB = []
     mLB = []
-    for Num in range(len(cnt_count)):
+    for Num in range(int(len(cnt_count))):
         cnt = contours[cnt_count[Num]]
+        #print(len(cnt_count))
         leftmost = tuple(cnt[cnt[:, :, 0].argmin()][0])
         rightmost = tuple(cnt[cnt[:, :, 0].argmax()][0])
         topmost = tuple(cnt[cnt[:, :, 1].argmin()][0])
@@ -159,8 +166,13 @@ while(True):
     print('mLB', mLB)
     """
     cv2.imshow('123', im)
+    cv2.imshow('bin',edges)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    elif cv2.waitKey(1) & 0xFF == ord('s'): # 按s存檔
+        itt = itt + 1;
+        cv2.imwrite('photo' + str(itt) + '.png',im)
+        print ('儲存:','photo' + str(itt) + '.png')
 
 
 cap.release()

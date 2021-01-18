@@ -31,7 +31,9 @@ delaytime = 0.1  # 每個畫面間隔時間
 
 
 def ik(x, y, theta):
+
     v2 = (pow(x, 2) + pow(y, 2) - pow(link1_length, 2) - pow(link2_length, 2)) / (2 * link1_length * link2_length)
+    #print(v2)
     d2 = math.acos(v2)
     k1 = link1_length + link2_length * math.cos(d2)
     k2 = link2_length * math.sin(d2)
@@ -87,13 +89,22 @@ def link_c(d1, d2, d3):
 
 max_=5
 min_=-5
+"""
 a = np.array([[0, random.randint(min_,max_), random.randint(min_,max_), 90],
-              [3, random.randint(min_,max_), random.randint(min_,max_), 45],
+              [1, random.randint(min_,max_), random.randint(min_,max_), 45],
               [6, random.randint(min_,max_), random.randint(min_,max_), 30],
               [9, random.randint(min_,max_), random.randint(min_,max_), 0]])
-print((ik(a[0][1]*10,a[0][2]*10,a[0][3])))
-print((ik(a[1][1]*10,a[1][2]*10,a[1][3])))
-print((ik(a[2][1]*10,a[2][2]*10,a[2][3])))
+print(a)
+"""
+
+a = np.array([[ 0 , 5 , 2 ,90],
+                 [ 1 , 1 ,-3 ,45],
+                [ 6 ,-3 , 5, 30],
+            [ 9 , 5 ,-1  ,0]])
+
+#print((ik(a[0][1]*10,a[0][2]*10,a[0][3])))
+#print((ik(a[1][1]*10,a[1][2]*10,a[1][3])))
+#print((ik(a[2][1]*10,a[2][2]*10,a[2][3])))
 ik_list=[]
 
 for target_deg in range(4):
