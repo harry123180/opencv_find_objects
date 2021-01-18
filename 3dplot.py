@@ -9,7 +9,6 @@ ax = fig.gca(projection='3d')
 z = np.linspace(0, 15, 100)
 x = np.sin(z)
 y = np.cos(z)
-
 # 繪製 3D 曲線
 ax.plot(x, y, z, color='gray', label='My Curve')
 

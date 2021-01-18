@@ -2,6 +2,7 @@ from serial.tools import list_ports
 import cv2
 from pydobot import Dobot
 import tkinter as tk
+import random as rd
 from PIL import Image, ImageTk
 from tkinter import *
 import threading
@@ -17,6 +18,7 @@ list_j2 = []
 list_j3 = []
 list_j4 = []
 state = True
+itt=0
 def job():
     global state
     global list_z, list_x, list_y
@@ -55,7 +57,7 @@ def Detect():
     t1 = threading.Thread(target=CVJOB)
     t1.start()
 def CVJOB():
-    global target,detect_state
+    global target,detect_state,im
     detect_state =True
     # import argparse
     def get_gray(img):  # 灰階
@@ -120,6 +122,7 @@ def CVJOB():
         # im = cv2.imread('2object.JPG')
         ret, frame = cap.read()
         im = cv2.resize(frame, (500, 500), interpolation=cv2.INTER_CUBIC)
+
         gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         # hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
         blurred = cv2.GaussianBlur(gray, (7, 7), 0)
@@ -154,8 +157,8 @@ def CVJOB():
                     centerX.append(cX)
                     centerY.append(cY)
                     # cnt_count = cnt_count + 1
-                    f1 = int(cY * 0.541 + 108.602)
-                    f2 = int(cX * 0.571 - 103.28)
+                    f1 = int(cY * 0.541 + 48.602)
+                    f2 = int(cX * 0.571 - 93.28)
                     target[0]=f1
                     target[1]=f2
                     text = str( f1) + ',' + str( f2 )
@@ -222,15 +225,18 @@ def CVJOB():
             break
         elif cv2.waitKey(1) & 0xFF == ord('s'):  # 按s存檔
             itt = itt + 1;
-            cv2.imwrite('photo' + str(itt) + '.png', im)
-            print('儲存:', 'photo' + str(itt) + '.png')
+
 
     cap.release()
     cv2.destroyAllWindows()
     cv2.waitKey(1)
     print('Detect')
 def Next():
-    print('Next')
+    global itt, im
+    itt +=1
+    #print('Next')
+    cv2.imwrite('data\photo' + str(itt) + '.png', im)
+    print('儲存:', 'photo' + str(itt) + '.png')
 def Previous():
     print("Previous")
 def Sucker():
@@ -247,16 +253,24 @@ def MoveJOB():
     t = threading.Thread(target=job)
     # 執行該子執行緒
     t.start()
-    device.move_to(58, -187, 10, r, wait=True)
-    device.move_to(228, -110, 10, r, wait=True)
-    device.move_to(target[0], target[1], 10, r, wait=True)
-    device.move_to(target[0], target[1], -63, r, wait=True)
+    P0, P1, P2 = np.array([[58, -187, 40],
+                           [228-rd.randint(-10,10), -110-rd.randint(-10,10), 10],
+                           [target[0], target[1], 10]])
+    # define bezier curve
+    P = lambda t: (1 - t) ** 2 * P0 + 2 * t * (1 - t) * P1 + t ** 2 * P2
+    # evaluate the curve on [0, 1] sliced in 50 points
+    points = np.array([P(t) for t in np.linspace(0, 1, 50)])
+    # get x and y coordinates of points separately
+    xb, yb, zb = points[:, 0], points[:, 1], points[:, 2]  # plot
+    for st in range(0,len(xb),2):
+        device.move_to(xb[st], yb[st], zb[st], r, wait=False)
+    device.move_to(xb[49], yb[49], -63, r, wait=True)
     device.suck(True)
     time.sleep(1)
-    device.move_to(target[0], target[1], 10, r, wait=True)
+    device.move_to(xb[49], yb[49], 10, r, wait=True)
     time.sleep(1)
-    device.move_to(228, -110, 10, r, wait=True)
-    device.move_to(58, -187, 10, r, wait=True)
+    for st in range(len(xb)-1,0,-2):
+        device.move_to(xb[st], yb[st], zb[st]+20, r, wait=False)
     device.move_to(58, -187, -30, r, wait=True)
     device.suck(False)
     state = False
@@ -265,7 +279,7 @@ def MoveJOB():
 
 
 def Place():
-    global list_z,list_x,list_y
+    global list_z,list_x,list_y,itt
     ##動作完畢 開始繪圖
     # 建立 3D 圖形
     fig = plt.figure()
@@ -291,6 +305,7 @@ def Place():
 
     # 顯示圖形
     plt.show()
+    plt.savefig('data\mat'+str(itt)+'.png')  # 儲存圖片
     list_x = []
     list_y = []
     list_z = []
