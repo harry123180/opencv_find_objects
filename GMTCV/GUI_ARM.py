@@ -270,9 +270,10 @@ def MoveJOB():
     device.move_to(xb[49], yb[49], 10, r, wait=True)
     time.sleep(1)
     for st in range(len(xb)-1,0,-2):
-        device.move_to(xb[st], yb[st], zb[st]+20, r, wait=False)
-    device.move_to(58, -187, -30, r, wait=True)
+        device.move_to(xb[st], yb[st], zb[st], r, wait=False)
+    device.move_to(58, -187, -60, r, wait=True)
     device.suck(False)
+    device.move_to(58, -187, 30, r, wait=True)
     state = False
 
 
