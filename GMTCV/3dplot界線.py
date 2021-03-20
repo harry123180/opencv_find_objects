@@ -25,4 +25,21 @@ ax.set_ylabel('Range (m)')
 ax.set_zlabel('Height (m)')
 
 # Save image.
-fig.savefig('data.png')
+#fig.savefig('data.png')
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+us = np.linspace(0, 2 * np.pi, 32)
+zs = np.linspace(0, 10, 2)
+
+us, zs = np.meshgrid(us, zs)
+
+xs = 10 * np.cos(us)
+ys = 10 * np.sin(us)
+ax.plot_surface(xs, ys, zs, color='b')
+
+plt.show()
